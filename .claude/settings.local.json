@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p /Users/lehuyvu/Research/crm/apps)",
+      "Bash(npx @nestjs/cli new api --skip-git --package-manager npm)",
+      "Bash(npm install:*)",
+      "Bash(npx create-vite@latest web --template react-ts)",
+      "Bash(npx tailwindcss:*)"
+    ]
+  }
+}
