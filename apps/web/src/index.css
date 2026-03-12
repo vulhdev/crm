@@ -35,6 +35,11 @@
   --shadow-modal: 0 20px 60px rgba(13,31,45,0.18), 0 4px 16px rgba(13,31,45,0.10);
   --focus-ring: #1A7A6E;
   --destructive: #C94040;
+
+  --background: 0 0% 100%;
+  --foreground: 20 14% 7%;
+  --muted-foreground: 25 5% 40%;
+  --ring: 172 64% 29%;
 }
 
 @keyframes fadeUp {

@@ -59,7 +59,7 @@ export function CustomerDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-[440px] sm:max-w-[440px] p-0 flex flex-col"
+        className="w-[440px] sm:max-w-[440px] p-0 flex flex-col bg-white"
         style={{ boxShadow: 'var(--shadow-modal)' }}
       >
         {/* Header */}

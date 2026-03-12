@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { google, sheets_v4 } from 'googleapis';
+import type { OAuth2Client } from 'google-auth-library';
 import type {
   Customer,
   CreateCustomerDto,
@@ -11,35 +12,15 @@ const SHEET_RANGE = 'Sheet1!A:J';
 
 @Injectable()
 export class SheetsService {
-  private readonly sheets: sheets_v4.Sheets;
-  private readonly spreadsheetId: string;
+  constructor(private readonly configService: ConfigService) {}
 
-  constructor(private readonly configService: ConfigService) {
-    const rawKey = this.configService.get<string>('GOOGLE_SERVICE_ACCOUNT_KEY') ?? '';
-    const email = this.configService.get<string>('GOOGLE_SERVICE_ACCOUNT_EMAIL') ?? '';
-
-    // Parse JSON key if provided; fall back to treating rawKey as the private key directly
-    let privateKey = rawKey;
-    let clientEmail = email;
-    try {
-      const parsed = JSON.parse(rawKey) as { client_email?: string; private_key?: string };
-      privateKey = parsed.private_key ?? rawKey;
-      clientEmail = email || parsed.client_email || '';
-    } catch {
-      // rawKey is not JSON — treat it as the raw private key string
-    }
-
-    // Env vars store literal \n — replace with real newlines for the PEM key
-    privateKey = privateKey.replace(/\\n/g, '\n');
-
-    const auth = new google.auth.JWT({
-      email: clientEmail,
-      key: privateKey,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    });
-
-    this.sheets = google.sheets({ version: 'v4', auth });
-    this.spreadsheetId = this.configService.get<string>('GOOGLE_SHEET_ID') ?? '';
+  private buildSheetsClient(accessToken: string, refreshToken: string): sheets_v4.Sheets {
+    const auth: OAuth2Client = new google.auth.OAuth2(
+      this.configService.get<string>('GOOGLE_OAUTH_CLIENT_ID'),
+      this.configService.get<string>('GOOGLE_OAUTH_CLIENT_SECRET'),
+    );
+    auth.setCredentials({ access_token: accessToken, refresh_token: refreshToken });
+    return google.sheets({ version: 'v4', auth });
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────
@@ -76,19 +57,28 @@ export class SheetsService {
 
   // ── Public API ────────────────────────────────────────────────────────────
 
-  async getAll(): Promise<Customer[]> {
-    const response = await this.sheets.spreadsheets.values.get({
-      spreadsheetId: this.spreadsheetId,
+  async getAll(
+    accessToken: string,
+    refreshToken: string,
+    spreadsheetId: string,
+  ): Promise<Customer[]> {
+    const sheets = this.buildSheetsClient(accessToken, refreshToken);
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
       range: SHEET_RANGE,
     });
 
     const rows = response.data.values ?? [];
-
-    // Skip header row (index 0)
     return rows.slice(1).map((row) => this.rowToCustomer(row as string[]));
   }
 
-  async append(dto: CreateCustomerDto): Promise<Customer> {
+  async append(
+    dto: CreateCustomerDto,
+    accessToken: string,
+    refreshToken: string,
+    spreadsheetId: string,
+  ): Promise<Customer> {
+    const sheets = this.buildSheetsClient(accessToken, refreshToken);
     const now = new Date().toISOString();
     const id = crypto.randomUUID();
 
@@ -105,8 +95,8 @@ export class SheetsService {
       createdAt: now,
     };
 
-    await this.sheets.spreadsheets.values.append({
-      spreadsheetId: this.spreadsheetId,
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
       range: SHEET_RANGE,
       valueInputOption: 'RAW',
       requestBody: {
@@ -117,14 +107,20 @@ export class SheetsService {
     return customer;
   }
 
-  async update(id: string, dto: UpdateCustomerDto): Promise<Customer> {
-    const response = await this.sheets.spreadsheets.values.get({
-      spreadsheetId: this.spreadsheetId,
+  async update(
+    id: string,
+    dto: UpdateCustomerDto,
+    accessToken: string,
+    refreshToken: string,
+    spreadsheetId: string,
+  ): Promise<Customer> {
+    const sheets = this.buildSheetsClient(accessToken, refreshToken);
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
       range: SHEET_RANGE,
     });
 
     const rows = response.data.values ?? [];
-    // rows[0] is the header row, data starts at rows[1]
     const dataRows = rows.slice(1) as string[][];
     const dataIndex = dataRows.findIndex((row) => row[0] === id);
 
@@ -146,11 +142,9 @@ export class SheetsService {
       createdAt: existing.createdAt,
     };
 
-    // Row number in the sheet: header is row 1, first data row is row 2
     const sheetRowNumber = dataIndex + 2;
-
-    await this.sheets.spreadsheets.values.update({
-      spreadsheetId: this.spreadsheetId,
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
       range: `Sheet1!A${sheetRowNumber}:J${sheetRowNumber}`,
       valueInputOption: 'RAW',
       requestBody: {
