@@ -2,6 +2,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { LoginPage } from '@/pages/LoginPage';
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { Toaster } from '@/components/ui/toaster';
 
 function AppRoutes() {
   const { token } = useAuth();
@@ -20,6 +21,7 @@ export default function App() {
   return (
     <AuthProvider>
       <AppRoutes />
+      <Toaster />
     </AuthProvider>
   );
 }
