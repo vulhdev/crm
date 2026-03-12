@@ -1,13 +1,30 @@
 # develop-team
 
-A two-agent team for building the CRM platform. Agents work in parallel on independent app boundaries — `apps/web` (FE) and `apps/api` (BE) — coordinating through the shared `packages/types` contract.
+A three-agent team for building the CRM platform. The designer defines the visual direction first; FE and BE then implement in parallel across their respective app boundaries, coordinating through the shared `packages/types` contract.
 
 ## Agents
 
-| Agent | File | Owns |
-|-------|------|------|
-| `senior-fe-developer` | `.claude/agents/senior-fe-developer.md` | `apps/web/` |
-| `senior-be-developer` | `.claude/agents/senior-be-developer.md` | `apps/api/` |
+| Agent | File | Owns | When |
+|-------|------|------|------|
+| `ui-designer` | `.claude/agents/ui-designer.md` | Design system, visual specs | **Before FE** — produces a design brief |
+| `senior-fe-developer` | `.claude/agents/senior-fe-developer.md` | `apps/web/` | After design brief is ready |
+| `senior-be-developer` | `.claude/agents/senior-be-developer.md` | `apps/api/` | Parallel with FE |
+
+## Workflow
+
+```
+ui-designer  ──► (design brief)
+                      │
+          ┌───────────┴───────────┐
+          ▼                       ▼
+senior-fe-developer       senior-be-developer
+  (apps/web/)               (apps/api/)
+```
+
+For any task that touches the UI:
+1. **Always run `ui-designer` first** to produce a design brief for the page/feature.
+2. Pass the design brief as context when spawning `senior-fe-developer`.
+3. `senior-be-developer` can run in parallel with the design step when the task is API-only.
 
 ## Shared Contract (`packages/types`)
 

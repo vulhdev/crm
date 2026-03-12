@@ -15,3 +15,10 @@ export interface Customer {
 
 export interface CreateCustomerDto extends Omit<Customer, 'id' | 'createdAt'> {}
 export interface UpdateCustomerDto extends Partial<CreateCustomerDto> {}
+
+export interface JwtPayload {
+  sub: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+}
