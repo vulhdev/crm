@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --brand-dark: #0D1F2D;
+  --brand-teal: #1A7A6E;
+  --brand-teal-light: #2AA99A;
+  --surface: #F7F6F3;
+  --surface-2: #EEECEA;
+  --text-primary: #141210;
+  --text-muted: #6B6560;
+  --text-inverse: #F7F6F3;
+  --border: #E2DED9;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.4s ease both; }
