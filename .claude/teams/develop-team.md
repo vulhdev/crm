@@ -1,30 +1,41 @@
 # develop-team
 
-A three-agent team for building the CRM platform. The designer defines the visual direction first; FE and BE then implement in parallel across their respective app boundaries, coordinating through the shared `packages/types` contract.
+A four-agent team for building the CRM platform following **TDD (Test-Driven Development)**. The QC agent writes tests first; the designer defines visual direction; FE and BE then implement against the tests, coordinating through the shared `packages/types` contract.
 
 ## Agents
 
 | Agent | File | Owns | When |
 |-------|------|------|------|
-| `ui-designer` | `.claude/agents/ui-designer.md` | Design system, visual specs | **Before FE** — produces a design brief |
-| `senior-fe-developer` | `.claude/agents/senior-fe-developer.md` | `apps/web/` | After design brief is ready |
-| `senior-be-developer` | `.claude/agents/senior-be-developer.md` | `apps/api/` | Parallel with FE |
+| `qc-agent` | `.claude/agents/qc-agent.md` | Unit & integration test files | **First** — before any implementation |
+| `ui-designer` | `.claude/agents/ui-designer.md` | Design system, visual specs | **Before FE** — produces a design brief (parallel with QC) |
+| `senior-fe-developer` | `.claude/agents/senior-fe-developer.md` | `apps/web/` | After QC tests + design brief are ready |
+| `senior-be-developer` | `.claude/agents/senior-be-developer.md` | `apps/api/` | After QC tests are ready |
 
 ## Workflow
 
 ```
-ui-designer  ──► (design brief)
-                      │
-          ┌───────────┴───────────┐
-          ▼                       ▼
-senior-fe-developer       senior-be-developer
-  (apps/web/)               (apps/api/)
+qc-agent ──► (test files)          ui-designer ──► (design brief)
+                    │                                     │
+                    └─────────────┬───────────────────────┘
+                                  │
+                    ┌─────────────┴─────────────┐
+                    ▼                           ▼
+        senior-fe-developer         senior-be-developer
+    (apps/web/ + FE test files)   (apps/api/ + BE test files)
 ```
 
-For any task that touches the UI:
-1. **Always run `ui-designer` first** to produce a design brief for the page/feature.
-2. Pass the design brief as context when spawning `senior-fe-developer`.
-3. `senior-be-developer` can run in parallel with the design step when the task is API-only.
+### TDD Order for full-stack tasks:
+1. **Spawn `qc-agent` + `ui-designer` in parallel** — QC writes tests, designer writes brief (both independent).
+2. **Spawn `senior-fe-developer`** with: original task + design brief + FE test files.
+3. **Spawn `senior-be-developer`** with: original task + BE test files (parallel with FE when possible).
+
+### TDD Order for API-only tasks:
+1. **Spawn `qc-agent`** — produces BE test files (`.spec.ts`).
+2. **Spawn `senior-be-developer`** — implements until tests pass.
+
+### TDD Order for UI-only tasks:
+1. **Spawn `qc-agent` + `ui-designer` in parallel**.
+2. **Spawn `senior-fe-developer`** with design brief + FE test files.
 
 ## Shared Contract (`packages/types`)
 

@@ -1,36 +1,12 @@
 import { Pencil } from 'lucide-react';
 import type { Customer } from '@crm/types';
 import { StatusBadge } from './StatusBadge';
+import { getAvatarPalette } from '@/lib/avatarPalette';
+import { formatDate } from '@/lib/formatDate';
 
 interface CustomerTableRowProps {
   customer: Customer;
   onEdit: (c: Customer) => void;
-}
-
-const PALETTES = [
-  { bg: '#E8F5F3', text: '#1A7A6E' },
-  { bg: '#EEF0FB', text: '#3D5BD9' },
-  { bg: '#FDF3E7', text: '#B85C0A' },
-  { bg: '#FAEAEA', text: '#C94040' },
-  { bg: '#EEECEA', text: '#6B6560' },
-];
-
-function getAvatarPalette(id: string) {
-  const hash = id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  return PALETTES[hash % PALETTES.length];
-}
-
-function formatDate(iso: string): string {
-  if (!iso) return '—';
-  try {
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }).format(new Date(iso));
-  } catch {
-    return '—';
-  }
 }
 
 export function CustomerTableRow({ customer, onEdit }: CustomerTableRowProps) {

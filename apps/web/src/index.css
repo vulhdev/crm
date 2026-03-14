@@ -40,6 +40,15 @@
   --foreground: 20 14% 7%;
   --muted-foreground: 25 5% 40%;
   --ring: 172 64% 29%;
+
+  --kanban-col-bg: #EEECEA;
+  --kanban-col-header-bg: #E8E6E2;
+  --card-hover-border: #C5C0BA;
+  --card-hover-shadow: 0 4px 12px rgba(13,31,45,0.10), 0 1px 4px rgba(13,31,45,0.06);
+  --drag-over-bg: rgba(26,122,110,0.06);
+  --drag-over-border: #1A7A6E;
+  --drag-handle-color: #C5C0BA;
+  --drag-handle-hover: #6B6560;
 }
 
 @keyframes fadeUp {

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useCustomers } from '@/hooks/useCustomers';
 import type { CreateCustomerDto } from '@crm/types';
@@ -6,7 +7,10 @@ import { Topbar } from '@/components/layout/Topbar';
 import { StatsRow } from '@/components/customers/StatsRow';
 import { CustomerFilters } from '@/components/customers/CustomerFilters';
 import { CustomerTable } from '@/components/customers/CustomerTable';
+import { CustomerGrid } from '@/components/customers/CustomerGrid';
+import { CustomerKanban } from '@/components/customers/CustomerKanban';
 import { CustomerDrawer } from '@/components/customers/CustomerDrawer';
+import { ViewToggle, type ViewMode } from '@/components/customers/ViewToggle';
 import { Button } from '@/components/ui/button';
 
 function ErrorNotice({ message, onRetry }: { message: string; onRetry: () => void }) {
@@ -39,6 +43,14 @@ function ErrorNotice({ message, onRetry }: { message: string; onRetry: () => voi
 export function DashboardPage() {
   const hook = useCustomers();
 
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    () => (localStorage.getItem('crm:customerViewMode') as ViewMode) ?? 'list'
+  );
+
+  useEffect(() => {
+    localStorage.setItem('crm:customerViewMode', viewMode);
+  }, [viewMode]);
+
   function handleClearFilters() {
     hook.setSearchQuery('');
     hook.setStatusFilter('All');
@@ -69,12 +81,15 @@ export function DashboardPage() {
               )}
             </p>
           </div>
-          <Button
-            onClick={hook.openAddDrawer}
-            className="bg-[#1A7A6E] hover:bg-[#12604F] text-white font-['DM_Sans'] font-medium text-[13.5px] gap-1.5 h-9 px-4"
-          >
-            + Add Customer
-          </Button>
+          <div className="flex items-center gap-3">
+            <ViewToggle viewMode={viewMode} onChange={setViewMode} />
+            <Button
+              onClick={hook.openAddDrawer}
+              className="bg-[#1A7A6E] hover:bg-[#12604F] text-white font-['DM_Sans'] font-medium text-[13.5px] gap-1.5 h-9 px-4"
+            >
+              + Add Customer
+            </Button>
+          </div>
         </div>
 
         {/* Stats row */}
@@ -89,21 +104,46 @@ export function DashboardPage() {
           onClear={handleClearFilters}
         />
 
-        {/* Table or error */}
+        {/* Content or error */}
         {hook.error ? (
           <ErrorNotice message={hook.error} onRetry={() => { void hook.fetchCustomers(); }} />
         ) : (
-          <CustomerTable
-            customers={hook.filteredCustomers}
-            allCustomersEmpty={hook.customers.length === 0}
-            isLoading={hook.isLoading}
-            sortColumn={hook.sortColumn}
-            sortDirection={hook.sortDirection}
-            onSort={hook.setSortColumn}
-            onEdit={hook.openEditDrawer}
-            onAddCustomer={hook.openAddDrawer}
-            onClearFilters={handleClearFilters}
-          />
+          <>
+            {viewMode === 'list' && (
+              <CustomerTable
+                customers={hook.filteredCustomers}
+                allCustomersEmpty={hook.customers.length === 0}
+                isLoading={hook.isLoading}
+                sortColumn={hook.sortColumn}
+                sortDirection={hook.sortDirection}
+                onSort={hook.setSortColumn}
+                onEdit={hook.openEditDrawer}
+                onAddCustomer={hook.openAddDrawer}
+                onClearFilters={handleClearFilters}
+              />
+            )}
+            {viewMode === 'grid' && (
+              <CustomerGrid
+                customers={hook.filteredCustomers}
+                allCustomersEmpty={hook.customers.length === 0}
+                isLoading={hook.isLoading}
+                onEdit={hook.openEditDrawer}
+                onAddCustomer={hook.openAddDrawer}
+                onClearFilters={handleClearFilters}
+              />
+            )}
+            {viewMode === 'kanban' && (
+              <CustomerKanban
+                customers={hook.filteredCustomers}
+                allCustomersEmpty={hook.customers.length === 0}
+                isLoading={hook.isLoading}
+                onEdit={hook.openEditDrawer}
+                onUpdate={hook.updateCustomer}
+                onAddCustomer={hook.openAddDrawer}
+                onClearFilters={handleClearFilters}
+              />
+            )}
+          </>
         )}
       </div>
 
