@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Customer, CustomerStatus, CreateCustomerDto, UpdateCustomerDto } from '@crm/types';
-import { apiFetch } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
+import { useCustomerStore } from '@/store/customerStore';
 
 export type SortDirection = 'asc' | 'desc';
 
@@ -28,33 +28,21 @@ export interface UseCustomersReturn {
 }
 
 export function useCustomers(): UseCustomersReturn {
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // --- store-backed state ---
+  const customers = useCustomerStore((s) => s.customers);
+  const isLoading = useCustomerStore((s) => s.isLoading);
+  const error = useCustomerStore((s) => s.error);
+  const fetchCustomers = useCustomerStore((s) => s.fetchCustomers);
+  const storeUpdateCustomer = useCustomerStore((s) => s.updateCustomer);
+  const storeAddCustomer = useCustomerStore((s) => s.addCustomer);
+
+  // --- view-local state ---
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<CustomerStatus | 'All'>('All');
   const [sortColumn, setSortColumnState] = useState<keyof Customer | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
-
-  const fetchCustomers = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const res = await apiFetch('/customers');
-      if (!res.ok) {
-        throw new Error(`Failed to fetch customers (${res.status})`);
-      }
-      const data = (await res.json()) as Customer[];
-      setCustomers(data);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load customers';
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
     void fetchCustomers();
@@ -65,10 +53,11 @@ export function useCustomers(): UseCustomersReturn {
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      result = result.filter((c) =>
-        `${c.firstName} ${c.lastName}`.toLowerCase().includes(q) ||
-        c.email.toLowerCase().includes(q) ||
-        c.company.toLowerCase().includes(q)
+      result = result.filter(
+        (c) =>
+          `${c.firstName} ${c.lastName}`.toLowerCase().includes(q) ||
+          c.email.toLowerCase().includes(q) ||
+          c.company.toLowerCase().includes(q),
       );
     }
 
@@ -106,31 +95,17 @@ export function useCustomers(): UseCustomersReturn {
   const submitCustomer = useCallback(
     async (data: CreateCustomerDto | UpdateCustomerDto) => {
       try {
-        let res: Response;
         if (editingCustomer) {
-          res = await apiFetch(`/customers/${editingCustomer.id}`, {
-            method: 'PATCH',
-            body: JSON.stringify(data),
-          });
+          await storeUpdateCustomer(editingCustomer.id, data as UpdateCustomerDto);
+          // store fires success/failure toast for updates; just close the drawer
         } else {
-          res = await apiFetch('/customers', {
-            method: 'POST',
-            body: JSON.stringify(data),
+          await storeAddCustomer(data as CreateCustomerDto);
+          toast({
+            title: 'Customer added',
+            description: 'New customer has been added successfully.',
           });
         }
-
-        if (!res.ok) {
-          throw new Error(`Request failed (${res.status})`);
-        }
-
-        await fetchCustomers();
         closeDrawer();
-        toast({
-          title: editingCustomer ? 'Customer updated' : 'Customer added',
-          description: editingCustomer
-            ? 'The customer record has been updated successfully.'
-            : 'New customer has been added successfully.',
-        });
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Something went wrong';
         toast({
@@ -141,21 +116,16 @@ export function useCustomers(): UseCustomersReturn {
         throw err;
       }
     },
-    [editingCustomer, fetchCustomers, closeDrawer]
+    [editingCustomer, storeUpdateCustomer, storeAddCustomer, closeDrawer],
   );
 
+  // Delegates directly to the store — no fetchCustomers() call, so isLoading
+  // never flips to true during a Kanban drag (the optimistic update is instant).
   const updateCustomer = useCallback(
     async (id: string, data: UpdateCustomerDto): Promise<void> => {
-      const res = await apiFetch(`/customers/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        throw new Error(`Request failed (${res.status})`);
-      }
-      await fetchCustomers();
+      await storeUpdateCustomer(id, data);
     },
-    [fetchCustomers]
+    [storeUpdateCustomer],
   );
 
   const setSortColumn = useCallback(
@@ -167,7 +137,7 @@ export function useCustomers(): UseCustomersReturn {
         setSortDirection('asc');
       }
     },
-    [sortColumn]
+    [sortColumn],
   );
 
   return {
