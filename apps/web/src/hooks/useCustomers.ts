@@ -21,6 +21,7 @@ export interface UseCustomersReturn {
   openEditDrawer: (c: Customer) => void;
   closeDrawer: () => void;
   submitCustomer: (data: CreateCustomerDto | UpdateCustomerDto) => Promise<void>;
+  updateCustomer: (id: string, data: UpdateCustomerDto) => Promise<void>;
   setSearchQuery: (q: string) => void;
   setStatusFilter: (s: CustomerStatus | 'All') => void;
   setSortColumn: (col: keyof Customer) => void;
@@ -143,6 +144,20 @@ export function useCustomers(): UseCustomersReturn {
     [editingCustomer, fetchCustomers, closeDrawer]
   );
 
+  const updateCustomer = useCallback(
+    async (id: string, data: UpdateCustomerDto): Promise<void> => {
+      const res = await apiFetch(`/customers/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        throw new Error(`Request failed (${res.status})`);
+      }
+      await fetchCustomers();
+    },
+    [fetchCustomers]
+  );
+
   const setSortColumn = useCallback(
     (col: keyof Customer) => {
       if (sortColumn === col) {
@@ -171,6 +186,7 @@ export function useCustomers(): UseCustomersReturn {
     openEditDrawer,
     closeDrawer,
     submitCustomer,
+    updateCustomer,
     setSearchQuery,
     setStatusFilter,
     setSortColumn,
