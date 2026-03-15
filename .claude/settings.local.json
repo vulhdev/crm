@@ -10,7 +10,18 @@
       "Bash(npm run:*)",
       "Bash(npx shadcn@latest:*)",
       "Bash(npx tsc:*)",
-      "Bash(gh issue:*)"
+      "Bash(gh issue:*)",
+      "Bash(cd /Users/lehuyvu/Research/crm/packages/types && npm test 2>&1)",
+      "Bash(git fetch:*)",
+      "Bash(cd /Users/lehuyvu/Research/crm/apps/api && node -e \"\nconst { createTransformer } = require\\('ts-jest'\\);\nconsole.log\\('ts-jest version:', require\\('ts-jest/package.json'\\).version\\);\n\")",
+      "Bash(cd /Users/lehuyvu/Research/crm/apps/api && npx jest debug-st 2>&1 | grep -E \"supertest|request|esModule\" | head -10; rm /Users/lehuyvu/Research/crm/apps/api/src/debug-st.spec.ts 2>/dev/null || true)",
+      "Bash(cd /Users/lehuyvu/Research/crm/apps/api && npx jest debug-st 2>&1 | grep -E \"typeof|function|PASS|FAIL\"; rm /Users/lehuyvu/Research/crm/apps/api/src/debug-st.spec.ts)",
+      "Bash(cat > /Users/lehuyvu/Research/crm/apps/api/src/__mocks__/supertest.js << 'EOF'\nconst actual = jest.requireActual\\('supertest'\\);\nconsole.log\\('[MOCK] actual type:', typeof actual\\);\nactual.__esModule = true;\nconsole.log\\('[MOCK] __esModule set:', actual.__esModule\\);\nmodule.exports = actual;\nEOF)",
+      "Bash(cd /Users/lehuyvu/Research/crm/apps/api && npx jest debug-st 2>&1 | grep -E \"\\\\[MOCK\\\\]|\\\\[TEST\\\\]|PASS|FAIL\"; rm /Users/lehuyvu/Research/crm/apps/api/src/debug-st.spec.ts)",
+      "Bash(/tmp/test-import.ts:*)",
+      "Read(//tmp/ts-output/tmp/**)",
+      "Bash(cd /Users/lehuyvu/Research/crm/apps/api && node -e \"\nconst ts = require\\('typescript'\\);\nconst code = \\\\\"import * as X from 'y'; const z = X;\\\\\";\nconst result = ts.transpileModule\\(code, {\n  compilerOptions: {\n    module: ts.ModuleKind.CommonJS,\n    moduleResolution: ts.ModuleResolutionKind.Node10,\n    esModuleInterop: false,\n    target: ts.ScriptTarget.ES2017\n  }\n}\\);\nconsole.log\\(result.outputText\\);\n\")",
+      "Bash(cd /Users/lehuyvu/Research/crm/apps/api && npx jest debug-st 2>&1 | grep -E \"typeof|PASS|FAIL\"; rm /Users/lehuyvu/Research/crm/apps/api/src/debug-st.spec.ts)"
     ]
   }
 }

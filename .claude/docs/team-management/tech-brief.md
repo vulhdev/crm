@@ -451,6 +451,27 @@ The existing per-user spreadsheets are owned by individual users' Google Drive a
 
 ---
 
+<<<<<<< Updated upstream
+=======
+## Implementation Status
+
+### `packages/types` — ✅ Shipped (PR #28, closes #23)
+
+All shared types defined in this section have been implemented and merged into `packages/types/src/index.ts`. A Jest test suite (46 tests, `ts-jest`) was added alongside the types. `Customer`, `CreateCustomerDto`, `UpdateCustomerDto`, and `GoogleUser` are unchanged.
+
+### Backend auth & Service Account migration — ✅ Shipped (PR #29, closes #24)
+
+- `AdminSheetsService` added: uses `google.auth.GoogleAuth` with Service Account credentials; provisions `Users`, `Invitations`, `Teams` tabs in `PLATFORM_SHEET_ID` on startup.
+- `AuthService` rewritten: `login(googleUser, crmUser)` signs JWT with `sub = Users.id` and `role`; new methods `findUserByGoogleId()`, `findOrCreateBootstrapAdmin()`, `processInviteToken()`.
+- `AuthController` OAuth callback implements Case A (returning user), Case B (invite redemption via OAuth `state`), and Bootstrap Admin; all failure paths return 403.
+- `GoogleStrategy` updated with `passReqToCallback: true` and `invite_token` threaded through OAuth `state`.
+- `RolesGuard` + `@Roles()` decorator added; Admin is superuser.
+- `CustomersController` updated: role-scoped `GET /customers`; `owner_id` stamped on `POST`; Phase 1 `sheet_ownership` routing preserved.
+- JWT expiry reduced to `4h`. TDD: 57 tests across 6 spec files.
+
+---
+
+>>>>>>> Stashed changes
 ## Shared Types to Define First (`packages/types`)
 
 Before either team begins implementation, the following types must be merged into `packages/types/src/index.ts`:
