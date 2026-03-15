@@ -451,6 +451,14 @@ The existing per-user spreadsheets are owned by individual users' Google Drive a
 
 ---
 
+## Implementation Status
+
+### `packages/types` — ✅ Shipped (PR #28, closes #23)
+
+All shared types defined in this section have been implemented and merged into `packages/types/src/index.ts`. A Jest test suite (46 tests, `ts-jest`) was added alongside the types. `Customer`, `CreateCustomerDto`, `UpdateCustomerDto`, and `GoogleUser` are unchanged.
+
+---
+
 ## Shared Types to Define First (`packages/types`)
 
 Before either team begins implementation, the following types must be merged into `packages/types/src/index.ts`:

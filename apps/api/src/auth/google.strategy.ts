@@ -9,9 +9,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(configService: ConfigService) {
     super({
       clientID: configService.get<string>('GOOGLE_OAUTH_CLIENT_ID') as string,
-      clientSecret: configService.get<string>(
-        'GOOGLE_OAUTH_CLIENT_SECRET',
-      ) as string,
+      clientSecret: configService.get<string>('GOOGLE_OAUTH_CLIENT_SECRET') as string,
       callbackURL:
         configService.get<string>('GOOGLE_OAUTH_CALLBACK_URL') ??
         'http://localhost:3000/auth/google/callback',
@@ -21,15 +19,21 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         'https://www.googleapis.com/auth/drive.file',
         'https://www.googleapis.com/auth/spreadsheets',
       ],
+      passReqToCallback: true,
     });
   }
 
-  // Request offline access and force consent to always receive a refresh token.
-  authorizationParams(): Record<string, string> {
-    return { access_type: 'offline', prompt: 'consent' };
+  authorizationParams(req: any): Record<string, string> {
+    const params: Record<string, string> = { access_type: 'offline', prompt: 'consent' };
+    const inviteToken = req?.query?.invite_token;
+    if (inviteToken) {
+      params.state = inviteToken;
+    }
+    return params;
   }
 
   validate(
+    req: any,
     accessToken: string,
     refreshToken: string,
     profile: any,
