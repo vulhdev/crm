@@ -7,6 +7,8 @@ import { AuthService } from './auth.service.js';
 import { GoogleStrategy } from './google.strategy.js';
 import { JwtStrategy } from './jwt.strategy.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
+import { AdminSheetsService } from './admin-sheets.service.js';
+import { RolesGuard } from './roles.guard.js';
 
 @Module({
   imports: [
@@ -17,12 +19,12 @@ import { JwtAuthGuard } from './jwt-auth.guard.js';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '7d' },
+        signOptions: { expiresIn: '4h' },
       }),
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy, JwtStrategy, JwtAuthGuard],
-  exports: [JwtModule, JwtAuthGuard],
+  providers: [AuthService, AdminSheetsService, GoogleStrategy, JwtStrategy, JwtAuthGuard, RolesGuard],
+  exports: [JwtModule, JwtAuthGuard, AdminSheetsService, RolesGuard],
 })
 export class AuthModule {}
