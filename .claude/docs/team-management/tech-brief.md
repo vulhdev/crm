@@ -29,6 +29,7 @@ The resolution is:
 3. **Data-scoping is enforced server-side**: when a Sales Manager or Admin calls `GET /customers`, the backend federates reads across the spreadsheets of all reps in scope, using the Service Account credential.
 
 This approach:
+
 - Removes the dependency on per-user OAuth tokens for Drive/Sheets operations, eliminating the need to store `accessToken`/`refreshToken` in the JWT
 - Gives the Service Account consistent, durable access to all data regardless of whether a user's OAuth token has expired
 - Requires a one-time migration of existing per-user spreadsheets to Service Account ownership (see Migration Path section)
@@ -39,31 +40,31 @@ This approach:
 
 ### New Endpoints
 
-| Method | Path | Description | Auth |
-|--------|------|-------------|------|
-| POST | `/invitations` | Create and send a new invitation | JWT (Admin only) |
-| GET | `/invitations` | List all pending/expired invitations | JWT (Admin only) |
-| DELETE | `/invitations/:token` | Revoke a pending invitation | JWT (Admin only) |
-| POST | `/invitations/:token/resend` | Reset expiry and resend the invitation email | JWT (Admin only) |
-| GET | `/invitations/validate/:token` | Validate a token before OAuth (public) | None |
-| GET | `/users` | List all CRM users | JWT (Admin or Sales Manager) |
-| GET | `/users/me` | Get the current user's own profile | JWT (any role) |
-| PATCH | `/users/:id` | Update display name or role | JWT (Admin only) |
-| PATCH | `/users/:id/deactivate` | Deactivate a member account | JWT (Admin only) |
-| PATCH | `/users/:id/reactivate` | Reactivate a member account | JWT (Admin only) |
-| GET | `/teams` | List all teams | JWT (Admin or Sales Manager) |
-| POST | `/teams` | Create a new team | JWT (Admin only) |
-| PATCH | `/teams/:id` | Rename a team or update manager/membership | JWT (Admin only) |
-| DELETE | `/teams/:id` | Delete a team (members revert to unassigned) | JWT (Admin only) |
+| Method | Path                           | Description                                  | Auth                         |
+| ------ | ------------------------------ | -------------------------------------------- | ---------------------------- |
+| POST   | `/invitations`                 | Create and send a new invitation             | JWT (Admin only)             |
+| GET    | `/invitations`                 | List all pending/expired invitations         | JWT (Admin only)             |
+| DELETE | `/invitations/:token`          | Revoke a pending invitation                  | JWT (Admin only)             |
+| POST   | `/invitations/:token/resend`   | Reset expiry and resend the invitation email | JWT (Admin only)             |
+| GET    | `/invitations/validate/:token` | Validate a token before OAuth (public)       | None                         |
+| GET    | `/users`                       | List all CRM users                           | JWT (Admin or Sales Manager) |
+| GET    | `/users/me`                    | Get the current user's own profile           | JWT (any role)               |
+| PATCH  | `/users/:id`                   | Update display name or role                  | JWT (Admin only)             |
+| PATCH  | `/users/:id/deactivate`        | Deactivate a member account                  | JWT (Admin only)             |
+| PATCH  | `/users/:id/reactivate`        | Reactivate a member account                  | JWT (Admin only)             |
+| GET    | `/teams`                       | List all teams                               | JWT (Admin or Sales Manager) |
+| POST   | `/teams`                       | Create a new team                            | JWT (Admin only)             |
+| PATCH  | `/teams/:id`                   | Rename a team or update manager/membership   | JWT (Admin only)             |
+| DELETE | `/teams/:id`                   | Delete a team (members revert to unassigned) | JWT (Admin only)             |
 
 ### Modified Endpoints
 
-| Method | Path | Change |
-|--------|------|--------|
-| GET | `/auth/google/callback` | Must now check for `invite_token` in session/state; if present, look up the invitation, create the user row in `Users` tab, mark token consumed; if absent, deny sign-in unless user already exists in `Users` tab |
-| GET | `/customers` | Must now scope results by role: Sales Rep sees own data only; Sales Manager sees all reps in their teams; Admin sees all |
-| POST | `/customers` | Must now record `owner_id` (the rep's CRM user id) on each new customer row |
-| PATCH | `/customers/:id` | Must now verify that the requesting user owns the record (or is Admin/Manager) |
+| Method | Path                    | Change                                                                                                                                                                                                             |
+| ------ | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| GET    | `/auth/google/callback` | Must now check for `invite_token` in session/state; if present, look up the invitation, create the user row in `Users` tab, mark token consumed; if absent, deny sign-in unless user already exists in `Users` tab |
+| GET    | `/customers`            | Must now scope results by role: Sales Rep sees own data only; Sales Manager sees all reps in their teams; Admin sees all                                                                                           |
+| POST   | `/customers`            | Must now record `owner_id` (the rep's CRM user id) on each new customer row                                                                                                                                        |
+| PATCH  | `/customers/:id`        | Must now verify that the requesting user owns the record (or is Admin/Manager)                                                                                                                                     |
 
 ---
 
@@ -81,10 +82,10 @@ interface InvitationResponse {
   token: string;
   email: string;
   role: CrmRole;
-  invitedBy: string;     // userId of the Admin who sent it
-  createdAt: string;     // ISO timestamp
-  expiresAt: string;     // ISO timestamp (createdAt + 72h)
-  status: 'Pending' | 'Consumed' | 'Revoked' | 'Expired';
+  invitedBy: string; // userId of the Admin who sent it
+  createdAt: string; // ISO timestamp
+  expiresAt: string; // ISO timestamp (createdAt + 72h)
+  status: "Pending" | "Consumed" | "Revoked" | "Expired";
 }
 
 // GET /invitations
@@ -93,11 +94,11 @@ type ListInvitationsResponse = InvitationResponse[];
 // GET /invitations/validate/:token  — public, called by the invite landing page
 interface ValidateTokenResponse {
   valid: boolean;
-  email: string;          // the email the invite was sent to
+  email: string; // the email the invite was sent to
   role: CrmRole;
   organizationName?: string;
   inviterName?: string;
-  reason?: 'expired' | 'revoked' | 'consumed'; // present when valid=false
+  reason?: "expired" | "revoked" | "consumed"; // present when valid=false
 }
 
 // GET /users
@@ -124,7 +125,7 @@ interface UpdateUserDto {
 // POST /teams
 interface CreateTeamDto {
   name: string;
-  managerId?: string;   // userId of a Sales Manager
+  managerId?: string; // userId of a Sales Manager
   memberIds?: string[]; // userIds of Sales Reps
 }
 
@@ -145,12 +146,12 @@ interface UpdateTeamDto {
 
 // Updated JWT payload
 interface JwtPayload {
-  sub: string;        // CRM user id (UUID from Users sheet, NOT googleId)
+  sub: string; // CRM user id (UUID from Users sheet, NOT googleId)
   googleId: string;
   email: string;
   firstName: string;
   lastName: string;
-  role: CrmRole;      // NEW
+  role: CrmRole; // NEW
   // accessToken and refreshToken removed — no longer needed client-side
 }
 ```
@@ -167,18 +168,18 @@ Header row (tab name: `Users`):
 id | google_id | email | first_name | last_name | role | status | team_id | created_at | updated_at
 ```
 
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | UUID | Platform-assigned CRM user id; this replaces `googleId` as the primary key used in JWT `sub` |
-| `google_id` | string | Google profile id — used to match the returning OAuth user |
-| `email` | string | Google account email recorded at sign-up |
-| `first_name` | string | From Google profile at sign-up, editable by Admin |
-| `last_name` | string | From Google profile at sign-up, editable by Admin |
-| `role` | enum | `Admin`, `Sales Manager`, `Sales Rep` |
-| `status` | enum | `Active`, `Deactivated` |
-| `team_id` | string | ID of the team the user belongs to; empty if unassigned |
-| `created_at` | ISO timestamp | When the account was created |
-| `updated_at` | ISO timestamp | Last mutation timestamp |
+| Column       | Type          | Notes                                                                                        |
+| ------------ | ------------- | -------------------------------------------------------------------------------------------- |
+| `id`         | UUID          | Platform-assigned CRM user id; this replaces `googleId` as the primary key used in JWT `sub` |
+| `google_id`  | string        | Google profile id — used to match the returning OAuth user                                   |
+| `email`      | string        | Google account email recorded at sign-up                                                     |
+| `first_name` | string        | From Google profile at sign-up, editable by Admin                                            |
+| `last_name`  | string        | From Google profile at sign-up, editable by Admin                                            |
+| `role`       | enum          | `Admin`, `Sales Manager`, `Sales Rep`                                                        |
+| `status`     | enum          | `Active`, `Deactivated`                                                                      |
+| `team_id`    | string        | ID of the team the user belongs to; empty if unassigned                                      |
+| `created_at` | ISO timestamp | When the account was created                                                                 |
+| `updated_at` | ISO timestamp | Last mutation timestamp                                                                      |
 
 ### New `Invitations` Tab (in platform sheet)
 
@@ -188,17 +189,17 @@ Header row (tab name: `Invitations`):
 token | email | role | invited_by | first_name | status | created_at | expires_at | consumed_at
 ```
 
-| Column | Type | Notes |
-|--------|------|-------|
-| `token` | string | Cryptographically random string (32 bytes, hex-encoded via `crypto.randomBytes`) |
-| `email` | string | Email address the invitation was sent to |
-| `role` | enum | Role that will be assigned on sign-up |
-| `invited_by` | string | CRM user id of the inviting Admin |
-| `first_name` | string | Optional hint provided by Admin |
-| `status` | enum | `Pending`, `Consumed`, `Revoked`, `Expired` |
-| `created_at` | ISO timestamp | |
-| `expires_at` | ISO timestamp | `created_at + 72 hours` |
-| `consumed_at` | ISO timestamp | Set when the invitee completes sign-up; empty until then |
+| Column        | Type          | Notes                                                                            |
+| ------------- | ------------- | -------------------------------------------------------------------------------- |
+| `token`       | string        | Cryptographically random string (32 bytes, hex-encoded via `crypto.randomBytes`) |
+| `email`       | string        | Email address the invitation was sent to                                         |
+| `role`        | enum          | Role that will be assigned on sign-up                                            |
+| `invited_by`  | string        | CRM user id of the inviting Admin                                                |
+| `first_name`  | string        | Optional hint provided by Admin                                                  |
+| `status`      | enum          | `Pending`, `Consumed`, `Revoked`, `Expired`                                      |
+| `created_at`  | ISO timestamp |                                                                                  |
+| `expires_at`  | ISO timestamp | `created_at + 72 hours`                                                          |
+| `consumed_at` | ISO timestamp | Set when the invitee completes sign-up; empty until then                         |
 
 ### New `Teams` Tab (in platform sheet)
 
@@ -208,14 +209,14 @@ Header row (tab name: `Teams`):
 id | name | manager_id | member_ids | created_at | updated_at
 ```
 
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | UUID | |
-| `name` | string | Human-readable team name |
-| `manager_id` | string | CRM user id of the assigned Sales Manager; empty if unassigned |
-| `member_ids` | string | Pipe-delimited list of CRM user ids (`userId1\|userId2`) — avoids adding a many-to-many join sheet |
-| `created_at` | ISO timestamp | |
-| `updated_at` | ISO timestamp | |
+| Column       | Type          | Notes                                                                                              |
+| ------------ | ------------- | -------------------------------------------------------------------------------------------------- |
+| `id`         | UUID          |                                                                                                    |
+| `name`       | string        | Human-readable team name                                                                           |
+| `manager_id` | string        | CRM user id of the assigned Sales Manager; empty if unassigned                                     |
+| `member_ids` | string        | Pipe-delimited list of CRM user ids (`userId1\|userId2`) — avoids adding a many-to-many join sheet |
+| `created_at` | ISO timestamp |                                                                                                    |
+| `updated_at` | ISO timestamp |                                                                                                    |
 
 ### Changes to Existing Customer Rows (`Sheet1`)
 
@@ -244,6 +245,7 @@ On a fresh deployment, the `Users` sheet is empty. The backend must have a boots
 The Google OAuth callback path (`GET /auth/google/callback`) must handle two cases:
 
 **Case A — Returning user (normal sign-in):**
+
 1. Extract `googleId` from the Google profile.
 2. Look up the `Users` tab for a row where `google_id` matches.
 3. If found and `status = Active`, issue a JWT with role and CRM user id.
@@ -251,6 +253,7 @@ The Google OAuth callback path (`GET /auth/google/callback`) must handle two cas
 5. If not found, return HTTP 403 ("No account found. Contact your Admin for an invitation.").
 
 **Case B — Invitation redemption:**
+
 1. The invite landing page redirects to `GET /auth/google?invite_token=<token>`. The token is passed to the OAuth flow via the `state` parameter.
 2. In `GoogleStrategy.authorizationParams()`, append `state` when `invite_token` is present in the request query.
 3. In the callback, if `state` contains an `invite_token`:
@@ -332,18 +335,19 @@ Role changes take effect on the member's next sign-in (next JWT issuance), not o
 
 ### New Routes
 
-| Path | Component | Guard |
-|------|-----------|-------|
-| `/invite/:token` | `InviteAcceptPage` | None (public) |
-| `/invite/error` | `InviteErrorPage` | None (public) |
-| `/team` | `TeamManagementPage` | JWT + Admin role |
-| `/team/users` | `UsersTab` | JWT + Admin role |
-| `/team/invitations` | `InvitationsTab` | JWT + Admin role |
-| `/team/teams` | `TeamsTab` | JWT + Admin role |
+| Path                | Component            | Guard            |
+| ------------------- | -------------------- | ---------------- |
+| `/invite/:token`    | `InviteAcceptPage`   | None (public)    |
+| `/invite/error`     | `InviteErrorPage`    | None (public)    |
+| `/team`             | `TeamManagementPage` | JWT + Admin role |
+| `/team/users`       | `UsersTab`           | JWT + Admin role |
+| `/team/invitations` | `InvitationsTab`     | JWT + Admin role |
+| `/team/teams`       | `TeamsTab`           | JWT + Admin role |
 
 ### Auth Store Changes (Zustand)
 
 The existing `crm_token` in localStorage continues to be used. The Zustand auth store must be updated to:
+
 - Decode `role` from the JWT payload on load (use `jwt-decode` — already likely available, or add it as a lightweight dependency)
 - Expose `role` and `userId` (`sub`) alongside the existing fields
 - Provide a `hasRole(role: CrmRole): boolean` selector for UI gating
@@ -396,12 +400,12 @@ The existing `SheetsService` remains in place during migration but its `buildShe
 
 ### Environment Variables (New)
 
-| Variable | Purpose |
-|----------|---------|
-| `PLATFORM_SHEET_ID` | ID of the shared platform Google Sheet containing `Users`, `Invitations`, `Teams` tabs |
-| `BOOTSTRAP_ADMIN_EMAIL` | Google email that is promoted to Admin on first sign-in if `Users` tab is empty |
-| `RESEND_API_KEY` | Transactional email API key |
-| `RESEND_FROM_ADDRESS` | Sender address for invitation emails |
+| Variable                | Purpose                                                                                |
+| ----------------------- | -------------------------------------------------------------------------------------- |
+| `PLATFORM_SHEET_ID`     | ID of the shared platform Google Sheet containing `Users`, `Invitations`, `Teams` tabs |
+| `BOOTSTRAP_ADMIN_EMAIL` | Google email that is promoted to Admin on first sign-in if `Users` tab is empty        |
+| `RESEND_API_KEY`        | Transactional email API key                                                            |
+| `RESEND_FROM_ADDRESS`   | Sender address for invitation emails                                                   |
 
 ---
 
@@ -438,21 +442,45 @@ The existing per-user spreadsheets are owned by individual users' Google Drive a
 
 ## Technical Risks
 
-| Risk | Likelihood | Mitigation |
-|------|-----------|------------|
-| Google OAuth `state` parameter stripping by certain OAuth proxy or firewall configurations | Low | Test in the target deployment environment early; have a fallback where the invite token is stored in a short-lived server-side session keyed on OAuth `nonce` |
-| Concurrent Admin writes to `Invitations`/`Users` tabs causing row corruption | Low | Append operations are safe; update operations (mark token consumed) use row-indexed writes which can collide under race conditions. Accept the risk at team sizes under 50; document it. |
-| Resend free tier limits or account verification delays blocking invitation emails | Medium | Build the "copy link" fallback into the UI from day one so Admins can share tokens without email if needed |
-| Per-user spreadsheet migration never completing, leaving a permanent two-tier architecture | Medium | Design `sheet_ownership` flag cleanly so Phase 2 can be executed incrementally; do not block Phase 1 ship on this |
-| JWT role claim staleness (role changed but old JWT still valid for up to 4 hours) | Medium | Acceptable per PRD; communicate the latency in the Admin UI. Forced sign-out is deferred |
-| `BOOTSTRAP_ADMIN_EMAIL` misconfiguration on fresh deploy locks out all users | Low | Add a startup log warning if `PLATFORM_SHEET_ID` is set but `Users` tab is empty and `BOOTSTRAP_ADMIN_EMAIL` is not configured |
-| Google Service Account losing access to user-owned spreadsheets after transfer | Low | Use Drive API `files.update` with `transferOwnership` or `addParents` during migration; test in a staging Drive before production run |
-| `member_ids` pipe-delimited column in `Teams` tab becomes difficult to manage at scale | Low | Acceptable for team sizes under 50. If teams exceed ~20 members, consider a dedicated `TeamMembers` tab in a future iteration |
+| Risk                                                                                       | Likelihood | Mitigation                                                                                                                                                                               |
+| ------------------------------------------------------------------------------------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Google OAuth `state` parameter stripping by certain OAuth proxy or firewall configurations | Low        | Test in the target deployment environment early; have a fallback where the invite token is stored in a short-lived server-side session keyed on OAuth `nonce`                            |
+| Concurrent Admin writes to `Invitations`/`Users` tabs causing row corruption               | Low        | Append operations are safe; update operations (mark token consumed) use row-indexed writes which can collide under race conditions. Accept the risk at team sizes under 50; document it. |
+| Resend free tier limits or account verification delays blocking invitation emails          | Medium     | Build the "copy link" fallback into the UI from day one so Admins can share tokens without email if needed                                                                               |
+| Per-user spreadsheet migration never completing, leaving a permanent two-tier architecture | Medium     | Design `sheet_ownership` flag cleanly so Phase 2 can be executed incrementally; do not block Phase 1 ship on this                                                                        |
+| JWT role claim staleness (role changed but old JWT still valid for up to 4 hours)          | Medium     | Acceptable per PRD; communicate the latency in the Admin UI. Forced sign-out is deferred                                                                                                 |
+| `BOOTSTRAP_ADMIN_EMAIL` misconfiguration on fresh deploy locks out all users               | Low        | Add a startup log warning if `PLATFORM_SHEET_ID` is set but `Users` tab is empty and `BOOTSTRAP_ADMIN_EMAIL` is not configured                                                           |
+| Google Service Account losing access to user-owned spreadsheets after transfer             | Low        | Use Drive API `files.update` with `transferOwnership` or `addParents` during migration; test in a staging Drive before production run                                                    |
+| `member_ids` pipe-delimited column in `Teams` tab becomes difficult to manage at scale     | Low        | Acceptable for team sizes under 50. If teams exceed ~20 members, consider a dedicated `TeamMembers` tab in a future iteration                                                            |
 
 ---
 
-<<<<<<< Updated upstream
-=======
+## Implementation Status
+
+### `packages/types` — ✅ Shipped (PR #28, closes #23)
+
+All shared types defined in this section have been implemented and merged into `packages/types/src/index.ts`. A Jest test suite (46 tests, `ts-jest`) was added alongside the types. `Customer`, `CreateCustomerDto`, `UpdateCustomerDto`, and `GoogleUser` are unchanged.
+
+### Backend auth & Service Account migration — ✅ Shipped (PR #29, closes #24)
+
+- `AdminSheetsService` added: uses `google.auth.GoogleAuth` with Service Account credentials; provisions `Users`, `Invitations`, `Teams` tabs in `PLATFORM_SHEET_ID` on startup.
+- `AuthService` rewritten: `login(googleUser, crmUser)` signs JWT with `sub = Users.id` and `role`; new methods `findUserByGoogleId()`, `findOrCreateBootstrapAdmin()`, `processInviteToken()`.
+- `AuthController` OAuth callback implements Case A (returning user), Case B (invite redemption via OAuth `state`), and Bootstrap Admin; all failure paths return 403.
+- `GoogleStrategy` updated with `passReqToCallback: true` and `invite_token` threaded through OAuth `state`.
+- `RolesGuard` + `@Roles()` decorator added; Admin is superuser.
+- `CustomersController` updated: role-scoped `GET /customers`; `owner_id` stamped on `POST`; Phase 1 `sheet_ownership` routing preserved.
+- JWT expiry reduced to `4h`. TDD: 57 tests across 6 spec files.
+
+### UsersModule, TeamsModule, InvitationsModule & MailService — ✅ Shipped (PR #30, closes #25)
+
+- `UsersModule`: `GET /users` (Admin/Manager), `GET /users/me` (any role), `PATCH /users/:id` (Admin), `PATCH /users/:id/deactivate` (Admin, last-Admin guard → 422), `PATCH /users/:id/reactivate` (Admin).
+- `TeamsModule`: `GET /teams` (Admin/Manager), `POST /teams`, `PATCH /teams/:id`, `DELETE /teams/:id` (Admin). Rep `teamId` is stamped/cleared on member changes; `member_ids` stored as pipe-delimited string.
+- `InvitationsModule`: `POST /invitations` (64-char hex token, 72h expiry, duplicate/already-member guards), `GET /invitations`, `DELETE /invitations/:token`, `POST /invitations/:token/resend`, `GET /invitations/validate/:token` (public). All Admin-only except validate.
+- `MailService`: Resend SDK transport; graceful fallback (logs invite URL) when `RESEND_API_KEY` absent; `inviteUrl` returned in API response for dev use.
+- New dependencies: `resend`, `class-validator`, `class-transformer`. TDD: 177 tests across 13 suites.
+
+---
+
 ## Implementation Status
 
 ### `packages/types` — ✅ Shipped (PR #28, closes #23)
@@ -471,15 +499,14 @@ All shared types defined in this section have been implemented and merged into `
 
 ---
 
->>>>>>> Stashed changes
 ## Shared Types to Define First (`packages/types`)
 
 Before either team begins implementation, the following types must be merged into `packages/types/src/index.ts`:
 
 ```typescript
-export type CrmRole = 'Admin' | 'Sales Manager' | 'Sales Rep';
-export type UserStatus = 'Active' | 'Deactivated';
-export type InvitationStatus = 'Pending' | 'Consumed' | 'Revoked';
+export type CrmRole = "Admin" | "Sales Manager" | "Sales Rep";
+export type UserStatus = "Active" | "Deactivated";
+export type InvitationStatus = "Pending" | "Consumed" | "Revoked";
 
 export interface CrmUser {
   id: string;
@@ -491,7 +518,7 @@ export interface CrmUser {
   status: UserStatus;
   teamId?: string;
   sheetId?: string;
-  sheetOwnership?: 'user' | 'service_account';
+  sheetOwnership?: "user" | "service_account";
   createdAt: string;
   updatedAt: string;
 }
@@ -519,7 +546,7 @@ export interface Team {
 
 // Updated — accessToken and refreshToken removed; role and googleId added
 export interface JwtPayload {
-  sub: string;       // CRM user UUID (Users.id)
+  sub: string; // CRM user UUID (Users.id)
   googleId: string;
   email: string;
   firstName: string;
