@@ -457,6 +457,24 @@ The existing per-user spreadsheets are owned by individual users' Google Drive a
 
 All shared types defined in this section have been implemented and merged into `packages/types/src/index.ts`. A Jest test suite (46 tests, `ts-jest`) was added alongside the types. `Customer`, `CreateCustomerDto`, `UpdateCustomerDto`, and `GoogleUser` are unchanged.
 
+### Backend auth & Service Account migration — ✅ Shipped (PR #29, closes #24)
+
+- `AdminSheetsService` added: uses `google.auth.GoogleAuth` with Service Account credentials; provisions `Users`, `Invitations`, `Teams` tabs in `PLATFORM_SHEET_ID` on startup.
+- `AuthService` rewritten: `login(googleUser, crmUser)` signs JWT with `sub = Users.id` and `role`; new methods `findUserByGoogleId()`, `findOrCreateBootstrapAdmin()`, `processInviteToken()`.
+- `AuthController` OAuth callback implements Case A (returning user), Case B (invite redemption via OAuth `state`), and Bootstrap Admin; all failure paths return 403.
+- `GoogleStrategy` updated with `passReqToCallback: true` and `invite_token` threaded through OAuth `state`.
+- `RolesGuard` + `@Roles()` decorator added; Admin is superuser.
+- `CustomersController` updated: role-scoped `GET /customers`; `owner_id` stamped on `POST`; Phase 1 `sheet_ownership` routing preserved.
+- JWT expiry reduced to `4h`. TDD: 57 tests across 6 spec files.
+
+### UsersModule, TeamsModule, InvitationsModule & MailService — ✅ Shipped (PR #30, closes #25)
+
+- `UsersModule`: `GET /users` (Admin/Manager), `GET /users/me` (any role), `PATCH /users/:id` (Admin), `PATCH /users/:id/deactivate` (Admin, last-Admin guard → 422), `PATCH /users/:id/reactivate` (Admin).
+- `TeamsModule`: `GET /teams` (Admin/Manager), `POST /teams`, `PATCH /teams/:id`, `DELETE /teams/:id` (Admin). Rep `teamId` is stamped/cleared on member changes; `member_ids` stored as pipe-delimited string.
+- `InvitationsModule`: `POST /invitations` (64-char hex token, 72h expiry, duplicate/already-member guards), `GET /invitations`, `DELETE /invitations/:token`, `POST /invitations/:token/resend`, `GET /invitations/validate/:token` (public). All Admin-only except validate.
+- `MailService`: Resend SDK transport; graceful fallback (logs invite URL) when `RESEND_API_KEY` absent; `inviteUrl` returned in API response for dev use.
+- New dependencies: `resend`, `class-validator`, `class-transformer`. TDD: 177 tests across 13 suites.
+
 ---
 
 ## Shared Types to Define First (`packages/types`)
